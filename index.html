@@ -2,78 +2,366 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>趣味小站</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>DogTi · 测测你是哪只小狗</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-:root{--bg:#f4f7ff;--text:#222;--card:#fff;--accent:#4285f4}
-.dark{--bg:#12141d;--text:#e8edff;--card:#1e2233;--accent:#589eff}
-body{background:var(--bg);color:var(--text);min-height:100vh;padding:30px 15px;transition:0.3s}
-.container{max-width:600px;margin:0 auto}
-.card{background:var(--card);border-radius:18px;padding:24px;margin-bottom:20px;box-shadow:0 4px 16px #00000015}
-h2{margin-bottom:16px;color:var(--accent)}
-.btn{border:none;background:var(--accent);color:#fff;padding:10px 18px;border-radius:10px;font-size:15px;margin:6px;cursor:pointer}
-.btn:active{opacity:0.85}
-#result{font-family:monospace;font-size:18px;padding:12px;background:#00000010;border-radius:10px;margin:12px 0;word-break:break-all}
-.foot{text-align:center;margin-top:40px;opacity:0.6;font-size:14px}
-#egg{margin-top:14px;color:#f59e0b;display:none}
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    font-family: "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background: linear-gradient(160deg,#fff6ec 0%,#ffe9f0 50%,#e8f4fd 100%);
+    min-height:100vh; color:#4a3f35; overflow-x:hidden;
+  }
+  .app { max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative; }
+  .screen { display:none; flex-direction:column; flex:1; padding:24px 22px 32px; animation:fadeIn .45s ease; }
+  .screen.active { display:flex; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:none;} }
+
+  /* ---------- 首页 ---------- */
+  .logo { font-size:15px; letter-spacing:4px; color:#b0956f; text-align:center; margin-top:12px; }
+  h1.title { text-align:center; font-size:34px; margin:18px 0 6px; line-height:1.3; }
+  h1.title .hl { color:#f08a8a; }
+  .sub { text-align:center; color:#9a8b7c; font-size:14px; margin-bottom:8px; }
+  .dog-hero { font-size:96px; text-align:center; margin:14px 0; animation:bounce 2.4s ease-in-out infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  .desc-card {
+    background:rgba(255,255,255,.75); backdrop-filter:blur(6px);
+    border-radius:18px; padding:16px 18px; font-size:13.5px; line-height:1.8; color:#7a6a5b;
+    box-shadow:0 6px 20px rgba(200,160,120,.12); margin-bottom:22px;
+  }
+  .desc-card b { color:#e07a7a; }
+  .btn {
+    display:block; width:100%; border:none; border-radius:999px; padding:16px;
+    font-size:17px; font-weight:600; cursor:pointer; transition:transform .15s, box-shadow .15s;
+  }
+  .btn:active { transform:scale(.96); }
+  .btn-primary {
+    background:linear-gradient(135deg,#ff9a8b,#f08a8a); color:#fff;
+    box-shadow:0 8px 20px rgba(240,138,138,.35);
+  }
+  .btn-ghost { background:#fff; color:#c49a6c; border:1.5px solid #e8d5bd; margin-top:12px; }
+  .foot-note { text-align:center; font-size:11px; color:#c2b2a0; margin-top:auto; padding-top:24px; }
+
+  /* ---------- 答题页 ---------- */
+  .top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .q-count { font-size:13px; color:#b0956f; font-weight:600; }
+  .quit { font-size:12px; color:#c2b2a0; background:none; border:none; padding:4px; }
+  .progress { height:8px; background:#f0e3d3; border-radius:99px; overflow:hidden; margin-bottom:30px; }
+  .progress-fill {
+    height:100%; width:0%; border-radius:99px;
+    background:linear-gradient(90deg,#ffb199,#f08a8a);
+    transition:width .4s cubic-bezier(.4,0,.2,1);
+  }
+  .q-scene { font-size:13px; color:#b0956f; margin-bottom:8px; letter-spacing:1px; }
+  .q-title { font-size:20px; font-weight:700; line-height:1.55; margin-bottom:26px; }
+  .opt {
+    background:#fff; border:1.5px solid #f0e3d3; border-radius:16px;
+    padding:15px 16px; font-size:15px; line-height:1.5; margin-bottom:12px;
+    cursor:pointer; transition:all .18s; display:flex; align-items:center; gap:12px;
+  }
+  .opt:hover { border-color:#f0b9a0; transform:translateX(4px); }
+  .opt:active { transform:scale(.97); background:#fff4ee; }
+  .opt .key {
+    flex-shrink:0; width:28px; height:28px; border-radius:50%;
+    background:#fdf0e6; color:#c49a6c; font-size:13px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .opt.chosen { border-color:#f08a8a; background:#fff1ec; }
+  .opt.chosen .key { background:#f08a8a; color:#fff; }
+
+  /* ---------- 结果页 ---------- */
+  .result-badge { text-align:center; font-size:13px; color:#b0956f; letter-spacing:3px; margin-top:6px; }
+  .result-dog { font-size:80px; text-align:center; margin:10px 0 4px; animation:pop .6s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop { from{transform:scale(.3); opacity:0;} to{transform:scale(1); opacity:1;} }
+  .result-code { text-align:center; font-size:14px; color:#c49a6c; font-weight:700; letter-spacing:2px; }
+  .result-name { text-align:center; font-size:28px; font-weight:800; color:#e07a7a; margin:6px 0 18px; }
+  .result-card {
+    background:rgba(255,255,255,.85); border-radius:20px; padding:20px;
+    box-shadow:0 8px 24px rgba(200,160,120,.15); margin-bottom:16px;
+  }
+  .result-card h3 { font-size:15px; color:#c49a6c; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+  .result-card p { font-size:14px; line-height:1.9; color:#6f5f50; }
+  .trait-tags { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+  .trait-tags span {
+    background:#fdf0e6; color:#c49a6c; font-size:12.5px;
+    padding:6px 12px; border-radius:99px; font-weight:600;
+  }
+  .bars { margin-top:6px; }
+  .bar-row { margin-bottom:12px; }
+  .bar-label { display:flex; justify-content:space-between; font-size:12.5px; color:#9a8b7c; margin-bottom:5px; }
+  .bar-track { height:7px; background:#f0e3d3; border-radius:99px; overflow:hidden; }
+  .bar-val { height:100%; background:linear-gradient(90deg,#ffb199,#f08a8a); border-radius:99px; transition:width 1s ease .3s; }
+  .match-card { background:#fff; border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .match-card .m-dog { font-size:36px; }
+  .match-card .m-info small { color:#b0956f; font-size:11px; display:block; }
+  .match-card .m-info b { font-size:14.5px; color:#6f5f50; }
+  .share-tip { font-size:12px; color:#c2b2a0; text-align:center; margin:6px 0 14px; }
+  .stats { text-align:center; font-size:12px; color:#c2b2a0; margin-top:16px; }
+
+  /* 加载彩蛋 */
+  #loading { align-items:center; justify-content:center; text-align:center; }
+  #loading .dog-hero { font-size:110px; }
+  .loading-txt { color:#b0956f; font-size:14px; letter-spacing:2px; }
+  .dots::after { content:''; animation:dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="card">
-    <h2>🎲 随机串生成器</h2>
-    <p>生成 10位【数字+大小写字母】随机串</p>
-    <div id="result">点击下方按钮生成</div>
-    <button class="btn" onclick="genStr()">生成随机串</button>
-    <button class="btn" onclick="copyText()">复制</button>
+<div class="app">
+
+  <!-- 首页 -->
+  <div class="screen active" id="screen-intro">
+    <div class="logo">DOG · MBTI</div>
+    <h1 class="title">测测你是<span class="hl">哪只小狗</span>🐕</h1>
+    <p class="sub">30 道题 · 16 种小狗人格 · 准确又好玩</p>
+    <div class="dog-hero">🐶</div>
+    <div class="desc-card">
+      如果把你变成一只小狗，你会是<b>撒手没的哈士奇</b>，还是<b>黏人精金毛</b>？<br>
+      是<b>心眼比骨头多的边牧</b>，还是<b>躺平冠军法斗</b>？<br>
+      回答 30 个日常小场景，找到你的本命小狗 ✨
+    </div>
+    <button class="btn btn-primary" onclick="startQuiz()">开始测试 🦴</button>
+    <button class="btn btn-ghost" onclick="voteNext()">投票：下一期测什么？</button>
+    <p class="foot-note">测试结果仅供娱乐 · DogTi v1.0</p>
   </div>
 
-  <div class="card">
-    <h2>🌓 明暗切换</h2>
-    <button class="btn" onclick="toggleDark()">切换暗黑/浅色</button>
+  <!-- 加载 -->
+  <div class="screen" id="loading">
+    <div class="dog-hero">🐕‍🦺</div>
+    <p class="loading-txt">正在翻找狗粮罐底的人格档案<span class="dots"></span></p>
   </div>
 
-  <div class="card">
-    <h2>✨ 彩蛋</h2>
-    <p>连续点标题5次触发惊喜</p>
-    <div id="egg">🎉 你找到隐藏彩蛋啦！本站纯静态，免费托管于Pages</div>
+  <!-- 答题 -->
+  <div class="screen" id="screen-quiz">
+    <div class="top-bar">
+      <span class="q-count" id="qCount">1 / 30</span>
+      <button class="quit" onclick="backHome()">✕ 退出</button>
+    </div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+    <p class="q-scene" id="qScene"></p>
+    <h2 class="q-title" id="qTitle"></h2>
+    <div id="optBox"></div>
   </div>
 
-  <div class="foot">
-    静态趣味小站 · 无后端 · 无需数据库
+  <!-- 结果 -->
+  <div class="screen" id="screen-result">
+    <p class="result-badge">—— 你是 ——</p>
+    <div class="result-dog" id="rDog">🐕</div>
+    <p class="result-code" id="rCode"></p>
+    <h2 class="result-name" id="rName"></h2>
+
+    <div class="result-card">
+      <h3>🐾 一句话档案</h3>
+      <p id="rSlogan"></p>
+      <div class="trait-tags" id="rTags"></div>
+    </div>
+
+    <div class="result-card">
+      <h3>📊 维度倾向</h3>
+      <div class="bars" id="rBars"></div>
+    </div>
+
+    <div class="match-card">
+      <div class="m-dog" id="mDog">🐩</div>
+      <div class="m-info">
+        <small>灵魂搭子</small>
+        <b id="mName"></b>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <h3>🦴 养护建议</h3>
+      <p id="rAdvice"></p>
+    </div>
+
+    <p class="share-tip">截图分享给你的小伙伴，看看谁是同窝的！</p>
+    <button class="btn btn-primary" onclick="copyResult()">复制我的小狗档案 📋</button>
+    <button class="btn btn-ghost" onclick="backHome()">再测一次 🔄</button>
+    <p class="stats">已经有 <b id="testCount">12,808</b> 只小狗找到了自己的品种</p>
+    <p class="foot-note">结果仅供娱乐，请勿用于任何严肃心理评估</p>
   </div>
 </div>
 
 <script>
-// 字符池：数字+大写+小写
-const pool = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-let output = "";
+/* ================= 题库：30题 × 4维度 ================= */
+/* 每题 options: [选项文本, 维度, 分值(+代表右向字母)] 维度: EI SN TF JP */
+const QUESTIONS = [
+ {s:"周末早晨", q:"难得的休息日清晨，你的真实状态是：", o:[
+   ["一睁眼就弹起来，今天必须搞点事！","EI",2],["躺会儿刷手机，慢慢回血","EI",1],
+   ["谁也别叫我，我在冬眠","EI",-2]]},
+ {s:"聚会现场", q:"朋友组局喊你出去玩，你通常：", o:[
+   ["冲！人越多越嗨","EI",2],["看心情，熟人局才去","EI",0],["心里拒绝但嘴上说好，在家装死","EI",-2]]},
+ {s:"电量设定", q:"玩了一整天后，你的充电方式是：", o:[
+   ["约人继续夜宵，越玩越有","EI",2],["安静待着就恢复了","EI",-2],["跟一两个最亲的人待着","EI",-1]]},
+ {s:"陌生人来访", q:"家里来了不太熟的人，你的反应：", o:[
+   ["主动搭话，自来熟本熟","EI",2],["礼貌应付两句","EI",0],["默默退回自己房间","EI",-2]]},
+ {s:"发言时刻", q:"群体聊天里冷场了，你会：", o:[
+   ["第一个开口救场","EI",2],["心里想梗但不说","EI",-1],["疯狂发表情包找存在感","EI",1]]},
+ {s:"独处时光", q:"连续独处一周没有社交，你感觉：", o:[
+   ["要憋疯了，急需吸猫吸狗吸人","EI",2],["还行，但开始想朋友了","EI",0],["这就是天堂，请续费","EI",-2]]},
+ {s:"旅行搭子", q:"去陌生城市旅行，你更享受：", o:[
+   ["混进当地热闹的市集认识新朋友","EI",2],["跟熟悉的朋友小范围逛","EI",-1],["一个人暴走，谁也别管我","EI",-2]]},
+ {s:"手机电量", q:"你的社交软件消息回复风格是：", o:[
+   ["秒回，话痨模式常开","EI",2],["看到就回，有时延迟","EI",0],["已读不回是常态，勿念","EI",-2]]},
 
-function genStr(){
-  let s = "";
-  for(let i=0;i<10;i++){
-    s += pool[Math.floor(Math.random()*pool.length)]
-  }
-  output = s;
-  document.getElementById("result").innerText = s;
+ {s:"新玩具", q:"朋友给你安利一个全新领域的东西，你：", o:[
+   ["先查资料搞懂原理再上手","SN",-2],["直接试，踩坑也是乐趣","SN",2],["等大家都用了我再说","SN",-1]]},
+ {s:"计划癖", q:"出发去玩之前，你的行程表是：", o:[
+   ["精确到几点几分去哪上厕所","SN",-2],["列个大概框架就好","SN",-1],["到了再说，随缘最快乐","SN",2]]},
+ {s:"回忆滤镜", q:"面对过去的失败经历，你更多是：", o:[
+   ["复盘吸取教训，绝不再踩","SN",-2],["偶尔想起会感慨一下","SN",0],["早忘了，我在想下次玩什么","SN",2]]},
+ {s:"脑洞时间", q:"开会/上课走神时，你的脑子在：", o:[
+   ["飘到幻想世界，编小剧场","SN",2],["想晚点吃什么","SN",1],["琢磨刚才讲的重点有没有漏","SN",-2]]},
+ {s:"说明书", q:"买了新家具，你会：", o:[
+   ["逐字阅读说明书再动手","SN",-2],["扫一眼示意图就开干","SN",1],["说明书？那是什么，能吃吗","SN",2]]},
+ {s:"未来话题", q:"朋友聊“十年后我们在干嘛”，你：", o:[
+   ["已经在脑内规划人生蓝图","SN",-2],["顺着聊聊挺有意思","SN",0],["十年后？今晚吃什么比较重要","SN",2]]},
+ {s:"细节雷达", q:"进入一个新环境，你最先注意到：", o:[
+   ["整体氛围和感觉","SN",2],["有没有好玩的细节彩蛋","SN",0],["安全出口在哪，布局是否合理","SN",-2]]},
+
+ {s:"朋友倾诉", q:"朋友哭着找你吐槽，你的第一反应：", o:[
+   ["先抱抱，骂对方讨厌的人","TF",2],["理性帮TA分析解决办法","TF",-2],["一半安慰一半讲道理","TF",0]]},
+ {s:"电影泪点", q:"看电影时你的状态是：", o:[
+   ["泪点低到纸巾不够用","TF",2],["会感动但能控制","TF",0],["全程冷静找剧情bug","TF",-2]]},
+ {s:"购物车", q:"纠结要不要买一个贵但喜欢的东西：", o:[
+   ["喜欢就买！开心无价","TF",2],["做表格算性价比","TF",-2],["先加收藏，让子弹飞一会儿","TF",0]]},
+ {s:"辩论现场", q:"和朋友观点冲突，你更在意：", o:[
+   ["气氛别搞僵，和气要紧","TF",2],["把道理讲清楚，对错要分明","TF",-2],["表面和好，内心记小本本","TF",1]]},
+ {s:"道别场景", q:"《忠犬八公》式结局，你会：", o:[
+   ["哭到隔壁座递纸巾","TF",2],["鼻子酸但不至于哭","TF",0],["这个煽情套路我早看穿了","TF",-2]]},
+ {s:"决定难题", q:"做重大决定时，你的指南针是：", o:[
+   ["跟着心和直觉走","TF",2],["列利弊清单，数据说话","TF",-2],["问遍所有朋友的意见","TF",1]]},
+
+ {s:"快递到了", q:"网购的东西比预定晚了一周：", o:[
+   ["算了算了，到了就行","JP",2],["催一下物流，然后等","JP",0],["投诉！差评！必须给说法！","JP",-2]]},
+ {s:"房间状态", q:"你的桌面/房间通常是：", o:[
+   ["看似混乱但我闭眼都能找到东西","JP",2],["乱几天就收拾一次","JP",0],["物品归位，强迫症狂喜","JP",-2]]},
+ {s:"Deadline", q:"面对截止日期，你的作战风格：", o:[
+   ["提前完成，从容收工","JP",-2],["按部就班推进","JP",0],[" deadline 是第一生产力！","JP",2]]},
+ {s:"变化来袭", q:"临时行程被打乱，你会：", o:[
+   ["有点烦，但马上安排新的","JP",-1],["算了，见招拆招","JP",2],["焦虑到坐立难安","JP",-2]]},
+ {s:"清单控", q:"你对待待办清单的态度：", o:[
+   ["每天列，每完成一项划掉，爽！","JP",-2],["偶尔列列","JP",0],["清单？我心里有数","JP",2]]},
+ {s:"点餐哲学", q:"在餐厅点餐，你：", o:[
+   ["老样子，闭眼点不出错","JP",-2],["想尝试新菜又怕踩雷","JP",1],["看啥都想吃，最后让朋友帮我选","JP",2]]},
+ {s:"旅行模式", q:"更吸引你的旅行方式：", o:[
+   ["跟团或做好全攻略，安全高效","JP",-2],["定个大概方向自由行","JP",0],["说走就走，迷路也是风景","JP",2]]},
+ {s:"懒人自白", q:"周末在家，你的真实画风：", o:[
+   ["躺平充电，一毫米都不想动","EI",-1],["必须出门透气，家里待不住","EI",1],["看心情，动静皆宜","EI",0]],
+  ,},
+
+ {s:"最后灵魂拷问", q:"如果变成小狗被主人带出门，你会：", o:[
+   ["疯狂社交，跟每只狗贴贴","EI",2],["优雅慢走，享受晒太阳","SN",-1],["东闻西嗅，世界好新奇！","SN",2],["寸步不离主人，谁也别想分开我们","TF",2],["看见飞盘就疯，纪律是什么","JP",2]]},
+];
+
+/* ================= 16种小狗人格库 ================= */
+const DOGS = {
+ ESTJ:{dog:"🐕‍🦺",name:"德牧队长",code:"ESTJ",slogan:"纪律是刻在骨头里的！巡逻、看家、管理铲屎官，一个都不落下。",tags:["天生领袖","执行力爆表","操心命","靠谱担当"],best:"ISFP 治愈系比熊",advice:"你责任心满分，但偶尔也要学会“撒手”：让别的狗带路一次，天塌不下来。"},
+ ESTP:{dog:"🐕",name:"street猎犬 · 街头猎犬",code:"ESTP",slogan:"看到飞盘的0.1秒内，身体已经起飞了。行动派本派！",tags:["行动派","胆大心细","气氛发动机","应激王"],best:"INFJ 高冷萨摩",advice:"你的爆发力无人能敌，但冲刺前记得先看看主人在不在——别撒手没。"},
+ ENFJ:{dog:"🦮",name:"金毛团宠",code:"ENFJ",slogan:"小区里所有小狗和小孩子都愿意跟着我走，这就是人格魅力（狗格魅力）。",tags:["天生暖狗","社牛","照顾型","万人迷"],best:"INFP 忧郁柴犬",advice:"你总是照顾所有人，记得也给自己留一根骨头的时间。"},
+ ENFP:{dog:"🐕",name:"快乐元气柯基",code:"ENFP",slogan:"屁股是发动机，快乐是燃料！今天也是元气满满拆家的一天！",tags:["小太阳","脑洞大","社交悍匪","三分钟热度"],best:"INTJ 高冷边牧",advice:"你的热情能点亮整条街，但别把骨头埋了就忘，学会收尾很重要。"},
+ ESFJ:{dog:"🐩",name:"贵宾小管家",code:"ESFJ",slogan:"谁还没吃饭？谁不开心了？我来我来！社区互助站站长就是你。",tags:["热心肠","重视和谐","记忆好","怕冲突"],best:"ISTP 高冷土狗",advice:"你把大家照顾得很好，但“别人的评价”不是狗粮，少吃点没关系。"},
+ ESFP:{dog:"🐶",name:"法斗戏精",code:"ESFP",slogan:"生活就是舞台，我是自带BGM的主角！安静？不存在的。",tags:["戏精","享乐派","自来熟","活在当下"],best:"INTJ 高冷边牧",advice:"快乐是你的超能力！不过钱包和体重秤，建议偶尔看一眼。"},
+ ENTJ:{dog:"🐕",name:"霸总杜宾",code:"ENTJ",slogan:"这个公园，以后归我管。目标明确，路线清晰，挡路者……绕行。",tags:["战略大脑","强势","效率控","气场两米八"],best:"INFP 忧郁柴犬",advice:"你天生适合带队，但记住：不是所有狗都想赢，有的只想晒太阳。"},
+ ENTP:{dog:"🐺",name:"哈士奇辩论家",code:"ENTP",slogan:"拆家不是破坏，是对家具结构的学术探讨。你说东，我偏问为什么不是西。",tags:["鬼点子多","抬杠冠军","好奇心爆棚","不按套路"],best:"ISFJ 治愈比熊",advice:"你的脑子是好脑子，但偶尔……让主人省点心，好吗？"},
+ ISTJ:{dog:"🐕",name:"田园犬老黄",code:"ISTJ",slogan:"看家三十年，风雨无阻。不求表扬，只求一切照旧、岁月静好。",tags:["可靠本可靠","传统派","细节控","慢热但长情"],best:"ENFP 元气柯基",advice:"你是大家最安心的存在，偶尔打破一次routine，世界不会崩。"},
+ ISFJ:{dog:"🐩",name:"比熊小棉袄",code:"ISFJ",slogan:"我记得你爱吃的口味、怕的东西、每次难过的日子。都在我心里存着呢。",tags:["温柔细腻","记恩","守护者","不会拒绝"],best:"ENTP 哈士奇辩论家",advice:"温柔的人最辛苦，练习说“不”，也是对自己的温柔。"},
+ INFJ:{dog:"🐕‍🦺",name:"萨摩微笑天使",code:"INFJ",slogan:"表面在微笑，内心在写小说。一眼看穿你的心事，但我不说。",tags:["读心术","理想主义","外柔内刚","神秘感"],best:"ESTP 街头猎犬",advice:"你的直觉很准，但别一个人消化所有情绪，找 trusted 的狗吐吐舌头吧。"},
+ INTJ:{dog:"🐕",name:"边牧大聪明",code:"INTJ",slogan:"不是我不合群，是你们的玩法太低效了。智商的孤独，你懂吗？",tags:["智商天花板","规划狂","高冷","完美主义"],best:"ENFP 元气柯基",advice:"聪明是你的天赋，但“放松地发呆”也是一种战略储备。"},
+ ISTP:{dog:"🐕",name:"土狗街溜子",code:"ISTP",slogan:"翻墙、开笼子、越狱，就没有我搞不定的机械结构。别问，问就是天赋。",tags:["动手天才","淡定","独狼","反套路"],best:"ESFJ 贵宾小管家",advice:"你的 Cool 值满点，偶尔主动贴贴喜欢的人，不会掉血的。"},
+ ISFP:{dog:"🐕",name:"柴犬小画家",code:"ISFP",slogan:"散步要闻每一朵花，吃饭要摆盘好看。生活嘛，是要用来品味的。",tags:["审美在线","随性","治愈系","不想努力了"],best:"ENFJ 金毛团宠",advice:"你的松弛感是稀缺资源！但决定偶尔也要自己拍板哦。"},
+ INFP:{dog:"🐕",name:"忧郁文艺柴",code:"INFP",slogan:"夕阳下望着远方的我，脑子里有一万字的内心独白。狗狗也有诗和远方。",tags:["内心戏足","共情大师","理想主义","易碎品"],best:"ENTJ 霸总杜宾",advice:"你的世界很美，记得从幻想里探出头来，现实里也有骨头吃。"},
+ INTP:{dog:"🐶",name:"发呆哲学家",code:"INTP",slogan:"我为什么叫狗？骨头为什么是骨头？主人为什么上班？想明白再玩。",tags:["思考狂","慢半拍","脑内宇宙","怕麻烦"],best:"ESFP 法斗戏精",advice:"想明白很好，但饭点到了请先吃饭，哲学可以边嚼边想。"}
+};
+
+/* ================= 状态与逻辑 ================= */
+let idx=0, scores={EI:0,SN:0,TF:0,JP:0}, userCode="";
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
-function copyText(){
-  if(!output) return alert("先生成！");
-  navigator.clipboard.writeText(output).then(()=>alert("复制成功"))
-}
-function toggleDark(){
-  document.documentElement.classList.toggle("dark")
+function backHome(){ idx=0; scores={EI:0,SN:0,TF:0,JP:0}; show('screen-intro'); }
+
+function startQuiz(){ idx=0; scores={EI:0,SN:0,TF:0,JP:0}; show('screen-quiz'); renderQ(); }
+
+function renderQ(){
+  const q=QUESTIONS[idx];
+  document.getElementById('qCount').textContent=`${idx+1} / ${QUESTIONS.length}`;
+  document.getElementById('progressFill').style.width=((idx)/QUESTIONS.length*100)+'%';
+  document.getElementById('qScene').textContent="📍 "+q.s;
+  document.getElementById('qTitle').textContent=q.q;
+  const box=document.getElementById('optBox'); box.innerHTML='';
+  const keys=['A','B','C','D'];
+  q.o.forEach((opt,i)=>{
+    const div=document.createElement('div');
+    div.className='opt';
+    div.innerHTML=`<span class="key">${keys[i]}</span><span>${opt[0]}</span>`;
+    div.onclick=()=>pick(opt,div);
+    box.appendChild(div);
+  });
 }
 
-// 彩蛋计数
-let clickCount = 0;
-document.querySelector("h2").addEventListener("click",()=>{
-  clickCount++;
-  if(clickCount >=5){
-    document.getElementById("egg").style.display="block";
-  }
-})
+function pick(opt,el){
+  document.querySelectorAll('.opt').forEach(o=>o.style.pointerEvents='none');
+  el.classList.add('chosen');
+  scores[opt[1]]+=opt[2];
+  setTimeout(()=>{
+    idx++;
+    document.getElementById('progressFill').style.width=(idx/QUESTIONS.length*100)+'%';
+    if(idx>=QUESTIONS.length) finish();
+    else renderQ();
+  },280);
+}
+
+function calcCode(){
+  const dims=[['E','I','EI'],['S','N','SN'],['T','F','TF'],['J','P','JP']];
+  return dims.map(([a,b,k])=>scores[k]>=0?a:b).join('');
+}
+
+function finish(){
+  show('loading');
+  setTimeout(()=>{
+    userCode=calcCode();
+    const d=DOGS[userCode]||DOGS.INFP;
+    document.getElementById('rDog').textContent=d.dog;
+    document.getElementById('rCode').textContent="DOG-MBTI · "+d.code;
+    document.getElementById('rName').textContent=d.name;
+    document.getElementById('rSlogan').textContent=d.slogan;
+    document.getElementById('rTags').innerHTML=d.tags.map(t=>`<span># ${t}</span>`).join('');
+    document.getElementById('rAdvice').textContent=d.advice;
+    // 灵魂搭子
+    const best=DOGS[d.best.split(' ')[0]];
+    if(best){ document.getElementById('mDog').textContent=best.dog; document.getElementById('mName').textContent=best.name+"（"+best.code+"）"; }
+    // 维度条
+    const bars=[['外向 E','内向 I',scores.EI],['实感 S','直觉 N',scores.SN],['感性 F','理性 T',-scores.TF],['感知 P','计划 J',-scores.JP]];
+    document.getElementById('rBars').innerHTML=bars.map(([l,r,v])=>{
+      const pct=Math.min(95,Math.max(5,50+v*9));
+      return `<div class="bar-row"><div class="bar-label"><span>${l}</span><span>${r}</span></div>
+        <div class="bar-track"><div class="bar-val" style="width:${pct}%"></div></div></div>`;
+    }).join('');
+    show('screen-result');
+  },1400);
+}
+
+function copyResult(){
+  const d=DOGS[userCode];
+  const text=`🐶 我在 DogTi 测出的小狗人格是【${d.name}】(${d.code})！\n"${d.slogan}"\n标签：${d.tags.map(t=>'#'+t).join(' ')}\n👉 快来测测你是哪只小狗！`;
+  (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject())
+    .then(()=>alert('已复制！去粘贴给小伙伴吧 🐾'))
+    .catch(()=>{ const t=document.createElement('textarea'); t.value=text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); alert('已复制！去粘贴给小伙伴吧 🐾'); });
+}
+
+function voteNext(){
+  const themes=['🐈 猫咪MBTI','🦊 狐狸MBTI','🐰 兔兔MBTI','🦖 恐龙MBTI'];
+  const pick=prompt('投票下一期测什么？\n1 猫咪MBTI\n2 狐狸MBTI\n3 兔兔MBTI\n4 恐龙MBTI\n（输入数字）');
+  if(pick) alert(`收到！「${themes[pick-1]||'神秘主题'}」+1 票，敬请期待！🗳️`);
+}
+
+/* 访问计数（纯前端演示，可接免费计数API如 countapi） */
+  const el=document.getElementById('testCount');
+  let n=parseInt(localStorage.getItem('dogti_count')||'12808')+1;
+  localStorage.setItem('dogti_count',n); el.textContent=n.toLocaleString();
+})();
 </script>
 </body>
 </html>
